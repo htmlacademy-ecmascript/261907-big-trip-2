@@ -1,7 +1,7 @@
 # Проект «Большое путешествие»
 
 * Студент: [Елена Есина](https://up.htmlacademy.ru/ecmascript-individual/2/user/261907).
-* Наставник: `Неизвестно`.
+* Наставник: [Анастасия Гущина](https://up.htmlacademy.ru/ecmascript-individual/2/user/811447).
 
 ---
 
