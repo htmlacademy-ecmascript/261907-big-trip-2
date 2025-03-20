@@ -8,19 +8,27 @@ import EventView from '../view/event-view.js';
 export default class ListPresenter {
   eventsList = new TripEventsListView();
 
-  constructor({header, main}) {
+  constructor({header, main, pointsModel}) {
     this.header = header;
     this.main = main;
+    this.pointsModel = pointsModel;
   }
 
   init() {
-    render(new TripHeaderView, this.header, RenderPosition.AFTERBEGIN);
-    render(new SortView, this.main);
+    this.listPoints = [...this.pointsModel.getPoints()];
+    render(new TripHeaderView(), this.header, RenderPosition.AFTERBEGIN);
+    render(new SortView(), this.main);
     render(this.eventsList, this.main);
-    render(new NewEventFormView, this.eventsList.getElement());
+    render(new NewEventFormView(), this.eventsList.getElement());
 
-    for (let i = 0; i < 3; i++) {
-      render(new EventView, this.eventsList.getElement());
+    for (let i = 0; i < this.listPoints.length; i++) {
+      const point = this.listPoints[i];
+
+      render(new EventView({
+        destination: this.pointsModel.getDestinationById(point.id),
+        offers: this.pointsModel.getAndFilterOffers(point.type, point.offers),
+        point
+      }), this.eventsList.getElement());
     }
   }
 }
