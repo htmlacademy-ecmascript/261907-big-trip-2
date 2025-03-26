@@ -7,8 +7,16 @@ export default class PointsModel {
   offers = offers;
   points = Array.from({length: POINTS_COUNT}, createPoint);
 
+  getDestinations() {
+    return this.destinations;
+  }
+
   getDestinationById(id) {
     return this.destinations.find((it) => it.id === id);
+  }
+
+  getOffersByType(type) {
+    return this.offers.find((it) => it.type === type).offers;
   }
 
   getAndFilterOffers(type, ids) {

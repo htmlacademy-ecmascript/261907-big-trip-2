@@ -1,3 +1,5 @@
+const getDefaultDate = () => (new Date()).toISOString();
+
 const getRandomIntegerInPositiveRange = (x, y) => {
   const min = Math.ceil(Math.min(Math.abs(x), Math.abs(y)));
   const max = Math.floor(Math.max(Math.abs(x), Math.abs(y)));
@@ -29,4 +31,4 @@ const createIdGenerator = () => {
 
 const getRandomArrayElement = (array) => array[getRandomIntegerInPositiveRange(0, array.length - 1)];
 
-export {getRandomIntegerInPositiveRange, createIdGenerator, createDateGenerator, getRandomArrayElement};
+export {getDefaultDate, getRandomIntegerInPositiveRange, createIdGenerator, createDateGenerator, getRandomArrayElement};
