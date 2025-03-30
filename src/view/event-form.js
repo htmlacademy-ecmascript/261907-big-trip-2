@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 import {TYPES} from '../const.js';
 import {getDefaultDate, getRandomArrayElement} from '../utils.js';
-import {createElement} from '../render.js';
+import AbstractView from '../framework/view/abstract-view.js';
 
 const BLANK_EVENT = {
   id: 0,
@@ -19,11 +19,13 @@ function getDestinationTemplate({description, pictures}) {
     <section class="event__section  event__section--destination">
       <h3 class="event__section-title  event__section-title--destination">Destination</h3>
       <p class="event__destination-description">${description}</p>
-      <div class="event__photos-container">
-        <div class="event__photos-tape">
-          ${pictures.map(({description: alt, src}) => `<img class="event__photo" src="${src}" alt="${alt}">`).join('')}
+      ${pictures.length ? `
+        <div class="event__photos-container">
+          <div class="event__photos-tape">
+            ${pictures.map(({description: alt, src}) => `<img class="event__photo" src="${src}" alt="${alt}">`).join('')}
+          </div>
         </div>
-      </div>
+      ` : ''}
     </section>
   `;
 }
@@ -35,7 +37,7 @@ function getDestinationsListTemplate({name}) {
 function getOptionTemplate({id, title, price}, eventId, eventOffers) {
   return `
     <div class="event__offer-selector">
-      <input class="event__offer-checkbox  visually-hidden" id="event-offer-${id}-${eventId}" type="checkbox" name="event-offer-${id}" ${eventOffers.includes(id)}>
+      <input class="event__offer-checkbox  visually-hidden" id="event-offer-${id}-${eventId}" type="checkbox" name="event-offer-${id}" ${eventOffers.includes(id) ? 'checked' : ''}>
       <label class="event__offer-label" for="event-offer-${id}-${eventId}">
         <span class="event__offer-title">${title}</span>
         &plus;&euro;&nbsp;
@@ -46,12 +48,10 @@ function getOptionTemplate({id, title, price}, eventId, eventOffers) {
 }
 
 function getTypeTemplate (type, isChecked, id) {
-  const lowerCaseType = type.toLowerCase();
-
   return `
     <div class="event__type-item">
-      <input id="event-type-${lowerCaseType}-${id}" class="event__type-input  visually-hidden" type="radio" name="event-type" value="${lowerCaseType}" ${isChecked ? 'checked' : ''} />
-      <label class="event__type-label  event__type-label--${lowerCaseType}" for="event-type-${lowerCaseType}-${id}">${type}</label>
+      <input id="event-type-${type}-${id}" class="event__type-input  visually-hidden" type="radio" name="event-type" value="${type}" ${isChecked ? 'checked' : ''} />
+      <label class="event__type-label  event__type-label--${type}" for="event-type-${type}-${id}">${type[0].toUpperCase()}${type.slice(1)}</label>
     </div>
   `;
 }
@@ -110,6 +110,11 @@ function createEventFormTemplate(destinations, offersList, point) {
           </div>
           <button class="event__save-btn  btn  btn--blue" type="submit">Save</button>
           <button class="event__reset-btn" type="reset">${isNew ? 'Cancel' : 'Delete'}</button>
+          ${!isNew ? `
+            <button class="event__rollup-btn" type="button">
+              <span class="visually-hidden">Open event</span>
+            </button>
+          ` : ''}
         </header>
         ${optionsTemplate || destinationTemplate ? `
           <section class="event__details">
@@ -131,26 +136,36 @@ function createEventFormTemplate(destinations, offersList, point) {
   `;
 }
 
-export default class EventFormView {
-  constructor({destinations, offersList, point = BLANK_EVENT}) {
-    this.destinations = destinations;
-    this.offersList = offersList;
-    this.point = point;
+export default class EventFormView extends AbstractView {
+  #destinations = null;
+  #offersList = null;
+  #point = null;
+  #handleFormSubmit = null;
+  #handleRollupClick = null;
+
+  constructor({destinations, offersList, point = BLANK_EVENT, onFormSubmit, onRollupClick}) {
+    super();
+    this.#destinations = destinations;
+    this.#offersList = offersList;
+    this.#point = point;
+    this.#handleFormSubmit = onFormSubmit;
+    this.#handleRollupClick = onRollupClick;
+
+    this.element.querySelector('form').addEventListener('submit', this.#formSubmitHandler);
+    this.element.querySelector('.event__rollup-btn').addEventListener('click', this.#rollupClickHandler);
   }
 
-  getTemplate() {
-    return createEventFormTemplate(this.destinations, this.offersList, this.point);
+  get template() {
+    return createEventFormTemplate(this.#destinations, this.#offersList, this.#point);
   }
 
-  getElement() {
-    if (!this.element) {
-      this.element = createElement(this.getTemplate());
-    }
+  #formSubmitHandler = (evt) => {
+    evt.preventDefault();
+    this.#handleFormSubmit();
+  };
 
-    return this.element;
-  }
-
-  removeElement() {
-    this.element = null;
-  }
+  #rollupClickHandler = (evt) => {
+    evt.preventDefault();
+    this.#handleRollupClick();
+  };
 }
