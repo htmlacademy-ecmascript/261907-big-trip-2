@@ -1,13 +1,13 @@
 import dayjs from 'dayjs';
 import {TYPES} from '../const.js';
-import {getDefaultDate, getRandomArrayElement} from '../utils.js';
+import {getRandomArrayElement} from '../utils/common.js';
 import AbstractView from '../framework/view/abstract-view.js';
 
 const BLANK_EVENT = {
   id: 0,
   basePrice: '',
-  dateFrom: getDefaultDate(),
-  dateTo: getDefaultDate(),
+  dateFrom: new Date().toISOString(),
+  dateTo: new Date().toISOString(),
   destination: '',
   isFavorite: 0,
   offers: [],
