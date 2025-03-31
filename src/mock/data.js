@@ -1,5 +1,5 @@
 import {TYPES} from '../const.js';
-import {createDateGenerator, createIdGenerator, getRandomIntegerInPositiveRange, getRandomArrayElement} from '../utils.js';
+import {createDateGenerator, createIdGenerator, getRandomIntegerInPositiveRange, getRandomArrayElement} from '../utils/common.js';
 
 const OFFERS_MAX_COUNT = 8;
 
