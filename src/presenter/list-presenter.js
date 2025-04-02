@@ -1,4 +1,5 @@
 import {render} from '../framework/render.js';
+import {updateItem} from '../utils/common.js';
 import SortView from '../view/sort-view.js';
 import NoPointView from '../view/no-points-view.js';
 import TripPointsListView from '../view/trip-points-list-view.js';
@@ -7,14 +8,14 @@ import PointPresenter from './point-presenter.js';
 
 export default class ListPresenter {
   #pointsModel = null;
-  #destinations = [];
-  #offers = [];
   #points = [];
-  #header = null;
-  #main = null;
+  #pointsPresenters = new Map();
+  #tripHeaderPresenter = null;
   #noPointsComponent = new NoPointView();
   #sortComponent = new SortView();
   #pointsListComponent = new TripPointsListView();
+  #header = null;
+  #main = null;
 
   constructor({header, main, pointsModel}) {
     this.#header = header;
@@ -27,6 +28,15 @@ export default class ListPresenter {
     this.#renderList();
   }
 
+  #handlePointUpdate = (updatedPoint, hasHeaderDataChanged = false) => {
+    this.#points = updateItem(this.#points, updatedPoint);
+    this.#pointsPresenters.get(updatedPoint.id).init(updatedPoint);
+
+    if (hasHeaderDataChanged) {
+      this.#tripHeaderPresenter.init(this.#points);
+    }
+  };
+
   #renderList() {
     if (!this.#points.length) {
       this.#renderNoPoints();
@@ -34,7 +44,7 @@ export default class ListPresenter {
       return;
     }
 
-    this.#renderTripHeader(this.#points);
+    this.#renderTripHeader();
     this.#renderSort();
     this.#renderPoints();
   }
@@ -43,13 +53,13 @@ export default class ListPresenter {
     render(this.#noPointsComponent, this.#main);
   }
 
-  #renderTripHeader(points) {
-    const tripHeaderPresenter = new TripHeaderPresenter({
+  #renderTripHeader() {
+    this.#tripHeaderPresenter = new TripHeaderPresenter({
       pointsModel: this.#pointsModel,
       container: this.#header
     });
 
-    tripHeaderPresenter.init(points);
+    this.#tripHeaderPresenter.init(this.#points);
   }
 
   #renderSort() {
@@ -67,9 +77,19 @@ export default class ListPresenter {
   #renderPoint(point) {
     const pointPresenter = new PointPresenter({
       pointsModel: this.#pointsModel,
-      pointsContainer: this.#pointsListComponent.element
+      pointsContainer: this.#pointsListComponent.element,
+      onDataUpdate: this.#handlePointUpdate
     });
 
     pointPresenter.init(point);
+    this.#pointsPresenters.set(point.id, pointPresenter);
+  }
+
+  #clearPoints() {
+    this.#pointsPresenters.forEach((it) => {
+      it.destroy();
+    });
+
+    this.#pointsPresenters.clear();
   }
 }
