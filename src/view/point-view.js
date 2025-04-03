@@ -4,7 +4,7 @@ import AbstractView from '../framework/view/abstract-view';
 
 dayjs.extend(duration);
 
-function createEventTimeTemplate(pointFrom, pointTo) {
+function createPointTimeTemplate(pointFrom, pointTo) {
   const pointDuration = dayjs.duration(pointTo - pointFrom).$d;
 
   return `
@@ -21,7 +21,7 @@ function createEventTimeTemplate(pointFrom, pointTo) {
   `;
 }
 
-function createEventTemplate({name}, offers, {basePrice, dateFrom, dateTo, type, isFavorite}) {
+function createPointTemplate({name}, offers, {basePrice, dateFrom, dateTo, type, isFavorite}) {
   const pointFrom = dayjs(dateFrom);
   const pointTo = dayjs(dateTo);
 
@@ -34,7 +34,7 @@ function createEventTemplate({name}, offers, {basePrice, dateFrom, dateTo, type,
         </div>
         <h3 class="event__title">${type} ${name}</h3>
         <div class="event__schedule">
-          ${createEventTimeTemplate(pointFrom, pointTo)}
+          ${createPointTimeTemplate(pointFrom, pointTo)}
         </div>
         <p class="event__price">
           &euro;&nbsp;<span class="event__price-value">${basePrice}</span>
@@ -63,28 +63,36 @@ function createEventTemplate({name}, offers, {basePrice, dateFrom, dateTo, type,
   `;
 }
 
-export default class EventView extends AbstractView {
+export default class PointView extends AbstractView {
   #destination = null;
   #offers = null;
   #point = null;
   #handleRollupClick = null;
+  #handleFavoriteClick = null;
 
-  constructor({destination, offers, point, onRollupClick}) {
+  constructor({destination, offers, point, onRollupClick, onFavoriteClick}) {
     super();
     this.#destination = destination;
     this.#offers = offers;
     this.#point = point;
     this.#handleRollupClick = onRollupClick;
+    this.#handleFavoriteClick = onFavoriteClick;
 
     this.element.querySelector('.event__rollup-btn').addEventListener('click', this.#rollupClickHandler);
+    this.element.querySelector('.event__favorite-btn').addEventListener('click', this.#favoriteClickHandler);
   }
 
   get template() {
-    return createEventTemplate(this.#destination, this.#offers, this.#point);
+    return createPointTemplate(this.#destination, this.#offers, this.#point);
   }
 
   #rollupClickHandler = (evt) => {
     evt.preventDefault();
     this.#handleRollupClick();
+  };
+
+  #favoriteClickHandler = (evt) => {
+    evt.preventDefault();
+    this.#handleFavoriteClick();
   };
 }

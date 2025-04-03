@@ -1,19 +1,21 @@
-import {RenderPosition, render, replace} from '../framework/render.js';
-import TripEventsListView from '../view/trip-events-list-view.js';
-import TripHeaderView from '../view/trip-header-view.js';
+import {render} from '../framework/render.js';
+import {updateItem} from '../utils/common.js';
 import SortView from '../view/sort-view.js';
-import EventFormView from '../view/event-form.js';
-import EventView from '../view/event-view.js';
-import NoEventView from '../view/no-events-view.js';
+import NoPointView from '../view/no-points-view.js';
+import TripPointsListView from '../view/trip-points-list-view.js';
+import TripHeaderPresenter from './trip-header-presenter.js';
+import PointPresenter from './point-presenter.js';
 
 export default class ListPresenter {
   #pointsModel = null;
-  #destinations = null;
-  #offers = null;
-  #listPoints = null;
+  #points = [];
+  #pointsPresenters = new Map();
+  #tripHeaderPresenter = null;
+  #noPointsComponent = new NoPointView();
+  #sortComponent = new SortView();
+  #pointsListComponent = new TripPointsListView();
   #header = null;
   #main = null;
-  #eventsList = new TripEventsListView();
 
   constructor({header, main, pointsModel}) {
     this.#header = header;
@@ -22,102 +24,79 @@ export default class ListPresenter {
   }
 
   init() {
-    this.#destinations = [...this.#pointsModel.destinations];
-    this.#offers = [...this.#pointsModel.offers];
-    this.#listPoints = [...this.#pointsModel.points];
-
+    this.#points = [...this.#pointsModel.points];
     this.#renderList();
   }
 
+  #handlePointUpdate = (updatedPoint, hasHeaderDataChanged = false) => {
+    this.#points = updateItem(this.#points, updatedPoint);
+    this.#pointsPresenters.get(updatedPoint.id).init(updatedPoint);
+
+    if (hasHeaderDataChanged) {
+      this.#tripHeaderPresenter.init(this.#points);
+    }
+  };
+
+  #handleModeChange = () => {
+    this.#pointsPresenters.forEach((it) => {
+      it.resetView();
+    });
+  };
+
   #renderList() {
-    if (!this.#listPoints.length) {
-      render(new NoEventView(), this.#main);
+    if (!this.#points.length) {
+      this.#renderNoPoints();
+
+      return;
     }
 
     this.#renderTripHeader();
-    render(new SortView(), this.#main);
-    render(this.#eventsList, this.#main);
-
-    for (let i = 0; i < this.#listPoints.length; i++) {
-      this.#renderPoint(this.#listPoints[i]);
-    }
+    this.#renderSort();
+    this.#renderPoints();
   }
 
-  #getBasePrices() {
-    return this.#listPoints.map((point) => point.basePrice);
-  }
-
-  #getOffersPrices(point) {
-    const offersByType = this.#offers.find((it) => it.type === point.type).offers;
-    const offersPrices = point.offers.map((id) => offersByType.find((it) => id === it.id).price);
-
-    return offersPrices;
+  #renderNoPoints() {
+    render(this.#noPointsComponent, this.#main);
   }
 
   #renderTripHeader() {
-    const route = this.#listPoints
-      .map((point) => point.destination)
-      .filter((destination, i, destinations) => i === 0 || destination !== destinations[i - 1])
-      .map((id) => this.#destinations.find((it) => it.id === id).name)
-      .join(' — ');
+    this.#tripHeaderPresenter = new TripHeaderPresenter({
+      pointsModel: this.#pointsModel,
+      container: this.#header
+    });
 
-    const dates = [this.#listPoints[0].dateFrom, this.#listPoints[this.#listPoints.length - 1].dateTo];
+    this.#tripHeaderPresenter.init(this.#points);
+  }
 
-    const sum = this.#listPoints
-      .map((point) => this.#getOffersPrices(point))
-      .flat()
-      .concat(this.#getBasePrices())
-      .reduce((partialSum, it) => partialSum + Number(it), 0);
+  #renderSort() {
+    render(this.#sortComponent, this.#main);
+  }
 
-    const tripHeaderComponent = new TripHeaderView({route, dates, sum});
+  #renderPoints() {
+    render(this.#pointsListComponent, this.#main);
 
-    render(tripHeaderComponent, this.#header, RenderPosition.AFTERBEGIN);
+    for (let i = 0; i < this.#points.length; i++) {
+      this.#renderPoint(this.#points[i]);
+    }
   }
 
   #renderPoint(point) {
-    const destination = this.#destinations.find((it) => it.id === point.destination);
-    const offersByType = this.#offers.find((it) => it.type === point.type).offers;
-    const filteredOffers = offersByType.filter((it) => point.offers.includes(it.id));
-
-    const ecsKeydownHandler = (evt) => {
-      if (evt.key === 'Escape') {
-        evt.preventDefault();
-        replaceFormToPoint();
-        document.removeEventListener('keydown', ecsKeydownHandler);
-      }
-    };
-
-    const closeForm = () => {
-      replaceFormToPoint();
-      document.removeEventListener('keydown', ecsKeydownHandler);
-    };
-
-    const eventComponent = new EventView({
-      destination,
-      offers: filteredOffers,
-      point,
-      onRollupClick: () => {
-        replacePointToForm();
-        document.addEventListener('keydown', ecsKeydownHandler);
-      }
+    const pointPresenter = new PointPresenter({
+      pointsModel: this.#pointsModel,
+      pointsContainer: this.#pointsListComponent.element,
+      onDataUpdate: this.#handlePointUpdate,
+      onModeChange: this.#handleModeChange
     });
 
-    const eventFormComponent = new EventFormView({
-      destinations: this.#destinations,
-      offersList: offersByType,
-      point,
-      onFormSubmit: closeForm,
-      onRollupClick: closeForm
+    pointPresenter.init(point);
+    this.#pointsPresenters.set(point.id, pointPresenter);
+  }
+
+  #clearPoints() {
+    this.#pointsPresenters.forEach((it) => {
+      it.destroy();
     });
 
-    function replacePointToForm() {
-      replace(eventFormComponent, eventComponent);
-    }
-
-    function replaceFormToPoint() {
-      replace(eventComponent, eventFormComponent);
-    }
-
-    render(eventComponent, this.#eventsList.element);
+    this.#pointsPresenters.clear();
   }
 }

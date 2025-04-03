@@ -29,4 +29,6 @@ const createIdGenerator = () => {
 
 const getRandomArrayElement = (array) => array[getRandomIntegerInPositiveRange(0, array.length - 1)];
 
-export {getRandomIntegerInPositiveRange, createIdGenerator, createDateGenerator, getRandomArrayElement};
+const updateItem = (items, update) => items.map((it) => it.id === update.id ? update : it);
+
+export {getRandomIntegerInPositiveRange, createIdGenerator, createDateGenerator, getRandomArrayElement, updateItem};

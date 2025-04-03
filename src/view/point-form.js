@@ -34,11 +34,11 @@ function getDestinationsListTemplate({name}) {
   return `<option value="${name}"></option>`;
 }
 
-function getOptionTemplate({id, title, price}, eventId, eventOffers) {
+function getOptionTemplate({id, title, price}, pointId, pointOffers) {
   return `
     <div class="event__offer-selector">
-      <input class="event__offer-checkbox  visually-hidden" id="event-offer-${id}-${eventId}" type="checkbox" name="event-offer-${id}" ${eventOffers.includes(id) ? 'checked' : ''}>
-      <label class="event__offer-label" for="event-offer-${id}-${eventId}">
+      <input class="event__offer-checkbox  visually-hidden" id="event-offer-${id}-${pointId}" type="checkbox" name="event-offer-${id}" ${pointOffers.includes(id) ? 'checked' : ''}>
+      <label class="event__offer-label" for="event-offer-${id}-${pointId}">
         <span class="event__offer-title">${title}</span>
         &plus;&euro;&nbsp;
         <span class="event__offer-price">${price}</span>
@@ -56,7 +56,7 @@ function getTypeTemplate (type, isChecked, id) {
   `;
 }
 
-function createEventFormTemplate(destinations, offersList, point) {
+function createPointFormTemplate(destinations, offersList, point) {
   const {id, basePrice, dateFrom, dateTo, destination, offers, type} = point;
   const pointFrom = dayjs(dateFrom);
   const pointTo = dayjs(dateTo);
@@ -66,7 +66,7 @@ function createEventFormTemplate(destinations, offersList, point) {
   const typesTemplate = TYPES.map((it) => getTypeTemplate(it, it === type, id)).join('');
   const destinationsListTemplate = destinations.map((it) => getDestinationsListTemplate(it)).join('');
   const optionsTemplate = offersList.map((it) => getOptionTemplate(it, id, offers)).join('');
-  const destinationTemplate = destinationInfo ? getDestinationTemplate(destinationInfo) : '';
+  const destinationTemplate = destinationInfo ? getDestinationTemplate(destinationInfo) : null;
 
   return `
     <li class="trip-events__item">
@@ -126,9 +126,7 @@ function createEventFormTemplate(destinations, offersList, point) {
                 </div>
               </section>
             ` : ''}
-            ${destinationTemplate ? `
-              ${destinationTemplate}
-            ` : ''}
+            ${destinationTemplate ?? ''}
           </section>
           ` : ''}
       </form>
@@ -136,36 +134,36 @@ function createEventFormTemplate(destinations, offersList, point) {
   `;
 }
 
-export default class EventFormView extends AbstractView {
+export default class PointFormView extends AbstractView {
   #destinations = null;
   #offersList = null;
   #point = null;
   #handleFormSubmit = null;
-  #handleRollupClick = null;
+  #handleFormRollupClick = null;
 
-  constructor({destinations, offersList, point = BLANK_EVENT, onFormSubmit, onRollupClick}) {
+  constructor({destinations, offersList, point = BLANK_EVENT, onFormSubmit, onFormRollupClick}) {
     super();
     this.#destinations = destinations;
     this.#offersList = offersList;
     this.#point = point;
     this.#handleFormSubmit = onFormSubmit;
-    this.#handleRollupClick = onRollupClick;
+    this.#handleFormRollupClick = onFormRollupClick;
 
     this.element.querySelector('form').addEventListener('submit', this.#formSubmitHandler);
     this.element.querySelector('.event__rollup-btn').addEventListener('click', this.#rollupClickHandler);
   }
 
   get template() {
-    return createEventFormTemplate(this.#destinations, this.#offersList, this.#point);
+    return createPointFormTemplate(this.#destinations, this.#offersList, this.#point);
   }
 
   #formSubmitHandler = (evt) => {
     evt.preventDefault();
-    this.#handleFormSubmit();
+    this.#handleFormSubmit(this.#point);
   };
 
   #rollupClickHandler = (evt) => {
     evt.preventDefault();
-    this.#handleRollupClick();
+    this.#handleFormRollupClick();
   };
 }
