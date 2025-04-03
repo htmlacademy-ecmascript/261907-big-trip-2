@@ -1,4 +1,6 @@
 import dayjs from 'dayjs';
+import flatpickr from 'flatpickr';
+import 'flatpickr/dist/flatpickr.min.css';
 import {TYPES} from '../const.js';
 import {getRandomArrayElement} from '../utils/common.js';
 import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
@@ -54,6 +56,7 @@ const createPointFormTemplate = (destinations, offersByType, point) => {
   const pointTo = dayjs(dateTo);
   const isNew = destination === '';
   const destinationInfo = destinations.find((it) => destination === it.id);
+  const isSubmitDisabled = pointFrom > pointTo;
 
   const typesTemplate = TYPES.map((it) => getTypeTemplate(it, it === type, id)).join('');
   const destinationsListTemplate = destinations.map((it) => getDestinationsListTemplate(it)).join('');
@@ -100,7 +103,7 @@ const createPointFormTemplate = (destinations, offersByType, point) => {
             </label>
             <input class="event__input  event__input--price" id="event-price-${id}" type="text" name="event-price" value="${basePrice}">
           </div>
-          <button class="event__save-btn  btn  btn--blue" type="submit">Save</button>
+          <button class="event__save-btn  btn  btn--blue" type="submit"${isSubmitDisabled ? ' disabled' : ''}>Save</button>
           <button class="event__reset-btn" type="reset">${isNew ? 'Cancel' : 'Delete'}</button>
           ${!isNew ? `
             <button class="event__rollup-btn" type="button">
@@ -130,6 +133,7 @@ export default class PointFormView extends AbstractStatefulView {
   #destinations = null;
   #offers = null;
   #point = null;
+  #datepickers = new Map();
   #handleFormSubmit = null;
   #handleFormRollupClick = null;
 
@@ -151,6 +155,11 @@ export default class PointFormView extends AbstractStatefulView {
     return createPointFormTemplate(this.#destinations, offersByType, this._state);
   }
 
+  removeElement() {
+    super.removeElement();
+    this.#destroyDatepickers();
+  }
+
   reset(point) {
     this.updateElement(
       PointFormView.parsePointToState(point)
@@ -166,6 +175,33 @@ export default class PointFormView extends AbstractStatefulView {
     this.element.querySelector('.event__input--destination').addEventListener('blur', this.#destinationBlurHandler);
     this.element.querySelector('.event__input--price').addEventListener('blur', this.#priceBlurHandler);
     this.element.querySelector('.event__available-offers')?.addEventListener('change', this.#offersChangeHandler);
+    this.#setDatepickers();
+  }
+
+  #setDatepicker(selector, defaultDate) {
+    return flatpickr(
+      this.element.querySelector(selector),
+      {
+        dateFormat: 'd/m/y H:i',
+        defaultDate,
+        enableTime: true,
+        onChange: this.#dateChangeHandler
+      }
+    );
+  }
+
+  #setDatepickers() {
+    this.#destroyDatepickers();
+    this.#datepickers.set('dateFrom', this.#setDatepicker('[name="event-start-time"]', this._state.dateFrom));
+    this.#datepickers.set('dateTo', this.#setDatepicker('[name="event-end-time"]', this._state.dateTo));
+  }
+
+  #destroyDatepickers() {
+    this.#datepickers.forEach((it) => {
+      it.destroy();
+    });
+
+    this.#datepickers.clear();
   }
 
   #formSubmitHandler = (evt) => {
@@ -234,6 +270,16 @@ export default class PointFormView extends AbstractStatefulView {
 
     this._setState({
       offers: chosenOffers
+    });
+  };
+
+  #dateChangeHandler = ([userDate], dateString, {element}) => {
+    const dateFrom = element.name === 'event-start-time' ? userDate.toISOString() : this._state.dateFrom;
+    const dateTo = element.name === 'event-end-time' ? userDate.toISOString() : this._state.dateTo;
+
+    this.updateElement({
+      dateFrom,
+      dateTo
     });
   };
 
