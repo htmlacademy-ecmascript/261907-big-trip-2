@@ -1,5 +1,7 @@
 import {render} from '../framework/render.js';
+import {SortType} from '../const.js';
 import {updateItem} from '../utils/common.js';
+import {sortDay, sortPrice, sortTime} from '../utils/trip.js';
 import SortView from '../view/sort-view.js';
 import NoPointView from '../view/no-points-view.js';
 import TripPointsListView from '../view/trip-points-list-view.js';
@@ -11,8 +13,9 @@ export default class ListPresenter {
   #points = [];
   #pointsPresenters = new Map();
   #tripHeaderPresenter = null;
+  #currentSortType = SortType.DAY;
   #noPointsComponent = new NoPointView();
-  #sortComponent = new SortView();
+  #sortComponent = null;
   #pointsListComponent = new TripPointsListView();
   #header = null;
   #main = null;
@@ -43,6 +46,33 @@ export default class ListPresenter {
     });
   };
 
+  #handleSortTypeChange = (sortType) => {
+    if (this.#currentSortType === sortType) {
+      return;
+    }
+
+    this.#sortPoints(sortType);
+    this.#clearPoints();
+    this.#renderPoints();
+  };
+
+  #sortPoints(sortType) {
+    switch (sortType) {
+      case SortType.TIME:
+        this.#points.sort(sortTime);
+
+        break;
+      case SortType.PRICE:
+        this.#points.sort(sortPrice);
+
+        break;
+      default:
+        this.#points.sort(sortDay);
+    }
+
+    this.#currentSortType = sortType;
+  }
+
   #renderList() {
     if (!this.#points.length) {
       this.#renderNoPoints();
@@ -69,6 +99,10 @@ export default class ListPresenter {
   }
 
   #renderSort() {
+    this.#sortComponent = new SortView({
+      onSortTypeChange: this.#handleSortTypeChange
+    });
+
     render(this.#sortComponent, this.#main);
   }
 
