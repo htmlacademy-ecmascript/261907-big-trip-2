@@ -37,6 +37,12 @@ export default class ListPresenter {
     }
   };
 
+  #handleModeChange = () => {
+    this.#pointsPresenters.forEach((it) => {
+      it.resetView();
+    });
+  };
+
   #renderList() {
     if (!this.#points.length) {
       this.#renderNoPoints();
@@ -78,7 +84,8 @@ export default class ListPresenter {
     const pointPresenter = new PointPresenter({
       pointsModel: this.#pointsModel,
       pointsContainer: this.#pointsListComponent.element,
-      onDataUpdate: this.#handlePointUpdate
+      onDataUpdate: this.#handlePointUpdate,
+      onModeChange: this.#handleModeChange
     });
 
     pointPresenter.init(point);

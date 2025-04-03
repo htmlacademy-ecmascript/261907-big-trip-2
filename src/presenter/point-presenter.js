@@ -2,20 +2,28 @@ import {remove, render, replace} from '../framework/render.js';
 import PointView from '../view/point-view.js';
 import PointFormView from '../view/point-form.js';
 
+const Mode = {
+  DEFAULT: 'default',
+  FORM: 'form'
+};
+
 export default class PointPresenter {
   #destinations = [];
   #offers = [];
   #point = null;
+  #mode = Mode.DEFAULT;
   #pointComponent = null;
   #pointFormComponent = null;
   #pointsContainer = null;
   #handleDataUpdate = null;
+  #handleModeChange = null;
 
-  constructor({pointsModel, pointsContainer, onDataUpdate}) {
+  constructor({pointsModel, pointsContainer, onDataUpdate, onModeChange}) {
     this.#destinations = [...pointsModel.destinations];
     this.#offers = [...pointsModel.offers];
     this.#pointsContainer = pointsContainer;
     this.#handleDataUpdate = onDataUpdate;
+    this.#handleModeChange = onModeChange;
   }
 
   init(point) {
@@ -48,11 +56,11 @@ export default class PointPresenter {
       return;
     }
 
-    if (this.#pointsContainer.contains(prevPointComponent.element)) {
+    if (this.#mode === Mode.DEFAULT) {
       replace(this.#pointComponent, prevPointComponent);
     }
 
-    if (this.#pointsContainer.contains(prevPointFormComponent.element)) {
+    if (this.#mode === Mode.FORM) {
       replace(this.#pointFormComponent, prevPointFormComponent);
     }
 
@@ -65,14 +73,23 @@ export default class PointPresenter {
     remove(this.#pointFormComponent);
   }
 
+  resetView() {
+    if (this.#mode !== Mode.DEFAULT) {
+      this.#replaceFormToPoint();
+    }
+  }
+
   #replacePointToForm() {
     replace(this.#pointFormComponent, this.#pointComponent);
     document.addEventListener('keydown', this.#ecsKeydownHandler);
+    this.#handleModeChange();
+    this.#mode = Mode.FORM;
   }
 
   #replaceFormToPoint() {
     replace(this.#pointComponent, this.#pointFormComponent);
     document.removeEventListener('keydown', this.#ecsKeydownHandler);
+    this.#mode = Mode.DEFAULT;
   }
 
   #ecsKeydownHandler = (evt) => {
