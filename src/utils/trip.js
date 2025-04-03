@@ -27,10 +27,19 @@ const isPresentPoint = (dateFrom, dateTo) => dayjs().isAfter(dayjs(dateFrom)) &&
 
 const isPastPoint = (dateTo) => dayjs().isAfter(dayjs(dateTo));
 
+const sortDay = (pointA, pointB) => dayjs(pointA.dateFrom) - dayjs(pointB.dateFrom);
+
+const sortPrice = (pointA, pointB) => pointB.basePrice - pointA.basePrice;
+
+const sortTime = (pointA, pointB) => (dayjs(pointB.dateTo) - dayjs(pointB.dateFrom)) - (dayjs(pointA.dateTo) - dayjs(pointA.dateFrom));
+
 export {
   extractRoute,
   findSum,
   isFuturePoint,
   isPresentPoint,
-  isPastPoint
+  isPastPoint,
+  sortDay,
+  sortPrice,
+  sortTime
 };
