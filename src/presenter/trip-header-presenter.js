@@ -9,9 +9,9 @@ export default class TripHeaderPresenter {
   #tripHeaderComponent = null;
   #container = null;
 
-  constructor({pointsModel, container}) {
-    this.#destinations = [...pointsModel.destinations];
-    this.#offers = [...pointsModel.offers];
+  constructor({destinations, offers, container}) {
+    this.#destinations = destinations;
+    this.#offers = offers;
     this.#container = container;
   }
 

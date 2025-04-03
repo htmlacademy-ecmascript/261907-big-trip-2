@@ -1,6 +1,6 @@
 import {remove, render, replace} from '../framework/render.js';
 import PointView from '../view/point-view.js';
-import PointFormView from '../view/point-form.js';
+import PointFormView from '../view/point-form-view.js';
 
 const Mode = {
   DEFAULT: 'default',
@@ -18,9 +18,9 @@ export default class PointPresenter {
   #handleDataUpdate = null;
   #handleModeChange = null;
 
-  constructor({pointsModel, pointsContainer, onDataUpdate, onModeChange}) {
-    this.#destinations = [...pointsModel.destinations];
-    this.#offers = [...pointsModel.offers];
+  constructor({destinations, offers, pointsContainer, onDataUpdate, onModeChange}) {
+    this.#destinations = destinations;
+    this.#offers = offers;
     this.#pointsContainer = pointsContainer;
     this.#handleDataUpdate = onDataUpdate;
     this.#handleModeChange = onModeChange;
@@ -45,7 +45,7 @@ export default class PointPresenter {
 
     this.#pointFormComponent = new PointFormView({
       destinations: this.#destinations,
-      offersList: offersByType,
+      offers: this.#offers,
       point: this.#point,
       onFormSubmit: this.#handleFormSubmit,
       onFormRollupClick: this.#handleFormRollupClick
@@ -75,6 +75,7 @@ export default class PointPresenter {
 
   resetView() {
     if (this.#mode !== Mode.DEFAULT) {
+      this.#pointFormComponent.reset(this.#point);
       this.#replaceFormToPoint();
     }
   }
@@ -95,6 +96,7 @@ export default class PointPresenter {
   #ecsKeydownHandler = (evt) => {
     if (evt.key === 'Escape') {
       evt.preventDefault();
+      this.#pointFormComponent.reset(this.#point);
       this.#replaceFormToPoint();
     }
   };
@@ -108,11 +110,12 @@ export default class PointPresenter {
   };
 
   #handleFormSubmit = (point) => {
-    this.#handleDataUpdate(point);
+    this.#handleDataUpdate(point, true);
     this.#replaceFormToPoint();
   };
 
   #handleFormRollupClick = () => {
+    this.#pointFormComponent.reset(this.#point);
     this.#replaceFormToPoint();
   };
 }

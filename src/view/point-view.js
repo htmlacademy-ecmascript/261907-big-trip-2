@@ -4,7 +4,7 @@ import AbstractView from '../framework/view/abstract-view';
 
 dayjs.extend(duration);
 
-function createPointTimeTemplate(pointFrom, pointTo) {
+const createPointTimeTemplate = (pointFrom, pointTo) => {
   const pointDuration = dayjs.duration(pointTo - pointFrom).$d;
 
   return `
@@ -19,9 +19,9 @@ function createPointTimeTemplate(pointFrom, pointTo) {
       ${`${pointDuration.minutes}`.padStart(2, '0')}M
     </p>
   `;
-}
+};
 
-function createPointTemplate({name}, offers, {basePrice, dateFrom, dateTo, type, isFavorite}) {
+const createPointTemplate = ({name}, offers, {basePrice, dateFrom, dateTo, type, isFavorite}) => {
   const pointFrom = dayjs(dateFrom);
   const pointTo = dayjs(dateTo);
 
@@ -61,7 +61,7 @@ function createPointTemplate({name}, offers, {basePrice, dateFrom, dateTo, type,
       </div>
     </li>
   `;
-}
+};
 
 export default class PointView extends AbstractView {
   #destination = null;

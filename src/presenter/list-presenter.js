@@ -10,6 +10,8 @@ import PointPresenter from './point-presenter.js';
 
 export default class ListPresenter {
   #pointsModel = null;
+  #destinations = [];
+  #offers = [];
   #points = [];
   #pointsPresenters = new Map();
   #tripHeaderPresenter = null;
@@ -24,6 +26,8 @@ export default class ListPresenter {
     this.#header = header;
     this.#main = main;
     this.#pointsModel = pointsModel;
+    this.#destinations = [...this.#pointsModel.destinations];
+    this.#offers = [...this.#pointsModel.offers];
   }
 
   init() {
@@ -91,7 +95,8 @@ export default class ListPresenter {
 
   #renderTripHeader() {
     this.#tripHeaderPresenter = new TripHeaderPresenter({
-      pointsModel: this.#pointsModel,
+      destinations: this.#destinations,
+      offers: this.#offers,
       container: this.#header
     });
 
@@ -116,7 +121,8 @@ export default class ListPresenter {
 
   #renderPoint(point) {
     const pointPresenter = new PointPresenter({
-      pointsModel: this.#pointsModel,
+      destinations: this.#destinations,
+      offers: this.#offers,
       pointsContainer: this.#pointsListComponent.element,
       onDataUpdate: this.#handlePointUpdate,
       onModeChange: this.#handleModeChange
