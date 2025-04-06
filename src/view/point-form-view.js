@@ -6,7 +6,6 @@ import {getRandomArrayElement} from '../utils/common.js';
 import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
 
 const BLANK_EVENT = {
-  id: 0,
   basePrice: '',
   dateFrom: new Date().toISOString(),
   dateTo: new Date().toISOString(),
@@ -56,7 +55,10 @@ const createPointFormTemplate = (destinations, offersByType, point) => {
   const pointTo = dayjs(dateTo);
   const isNew = destination === '';
   const destinationInfo = destinations.find((it) => destination === it.id);
-  const isSubmitDisabled = pointFrom > pointTo;
+
+  const isSubmitDisabled = pointFrom >= pointTo
+    || !destination
+    || !basePrice;
 
   const typesTemplate = TYPES.map((it) => getTypeTemplate(it, it === type, id)).join('');
   const destinationsListTemplate = destinations.map((it) => getDestinationsListTemplate(it)).join('');
@@ -135,14 +137,16 @@ export default class PointFormView extends AbstractStatefulView {
   #point = null;
   #datepickers = new Map();
   #handleFormSubmit = null;
+  #handleDeleteClick = null;
   #handleFormRollupClick = null;
 
-  constructor({destinations, offers, point = BLANK_EVENT, onFormSubmit, onFormRollupClick}) {
+  constructor({destinations, offers, onFormSubmit, onDeleteClick, onFormRollupClick, point = BLANK_EVENT}) {
     super();
     this.#destinations = destinations;
     this.#offers = offers;
     this.#point = point;
     this.#handleFormSubmit = onFormSubmit;
+    this.#handleDeleteClick = onDeleteClick;
     this.#handleFormRollupClick = onFormRollupClick;
 
     this._setState(PointFormView.parsePointToState(this.#point));
@@ -168,12 +172,13 @@ export default class PointFormView extends AbstractStatefulView {
 
   _restoreHandlers() {
     this.element.querySelector('form').addEventListener('submit', this.#formSubmitHandler);
-    this.element.querySelector('.event__rollup-btn').addEventListener('click', this.#rollupClickHandler);
+    this.element.querySelector('.event__reset-btn').addEventListener('click', this.#deleteClickHandler);
+    this.element.querySelector('.event__rollup-btn')?.addEventListener('click', this.#rollupClickHandler);
     this.element.querySelector('.event__type-group').addEventListener('change', this.#typeChangeHandler);
     this.element.querySelector('.event__input--destination').addEventListener('keydown', this.#destinationKeydownHandler);
-    this.element.querySelector('.event__input--destination').addEventListener('input', this.#destinationInputHandler);
-    this.element.querySelector('.event__input--destination').addEventListener('blur', this.#destinationBlurHandler);
-    this.element.querySelector('.event__input--price').addEventListener('blur', this.#priceBlurHandler);
+    this.element.querySelector('.event__input--destination').addEventListener('change', this.#destinationChangeHandler);
+    this.element.querySelector('.event__input--price').addEventListener('change', this.#priceChangeHandler);
+    this.element.querySelector('.event__input--price').addEventListener('keydown', this.#priceKeydownHandler);
     this.element.querySelector('.event__available-offers')?.addEventListener('change', this.#offersChangeHandler);
     this.#setDatepickers();
   }
@@ -209,6 +214,11 @@ export default class PointFormView extends AbstractStatefulView {
     this.#handleFormSubmit(this._state);
   };
 
+  #deleteClickHandler = (evt) => {
+    evt.preventDefault();
+    this.#handleDeleteClick(PointFormView.parseStateToPoint(this._state));
+  };
+
   #rollupClickHandler = (evt) => {
     evt.preventDefault();
     this.#handleFormRollupClick();
@@ -231,23 +241,20 @@ export default class PointFormView extends AbstractStatefulView {
     evt.target.value = '';
   };
 
-  #destinationInputHandler = (evt) => {
+  #destinationChangeHandler = (evt) => {
     evt.preventDefault();
 
     if (evt.target.value) {
+      const destinationInfo = this.#destinations.find((it) => it.name === evt.target.value);
+      const destination = destinationInfo ? destinationInfo.id : '';
+
       this.updateElement({
-        destination: this.#destinations.find((it) => it.name === evt.target.value).id
+        destination
       });
     }
   };
 
-  #destinationBlurHandler = (evt) => {
-    if (!evt.target.value) {
-      evt.target.value = this.#destinations.find((it) => it.id === this._state.destination).name;
-    }
-  };
-
-  #priceBlurHandler = (evt) => {
+  #priceChangeHandler = (evt) => {
     const newValue = Math.abs(parseInt(evt.target.value, 10));
 
     if (isNaN(newValue)) {
@@ -255,10 +262,18 @@ export default class PointFormView extends AbstractStatefulView {
     } else {
       evt.target.value = newValue;
 
-      this._setState({
+      this.updateElement({
         basePrice: newValue
       });
     }
+  };
+
+  #priceKeydownHandler = (evt) => {
+    if (!isNaN(evt.key) || evt.key === 'Backspace' || evt.key === 'Delete') {
+      return;
+    }
+
+    evt.preventDefault();
   };
 
   #offersChangeHandler = (evt) => {
