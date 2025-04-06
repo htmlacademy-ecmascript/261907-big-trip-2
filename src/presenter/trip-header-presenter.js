@@ -33,4 +33,9 @@ export default class TripHeaderPresenter {
 
     remove(prevTripHeaderComponent);
   }
+
+  destroy() {
+    remove(this.#tripHeaderComponent);
+    this.#tripHeaderComponent = null;
+  }
 }

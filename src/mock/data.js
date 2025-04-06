@@ -141,4 +141,4 @@ const createPoint = () => {
   };
 };
 
-export {DESTINATIONS, createPoint, offers};
+export {DESTINATIONS, generatePointId, createPoint, offers};

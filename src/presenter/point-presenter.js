@@ -1,10 +1,11 @@
+import {UpdateType, UserAction} from '../const.js';
 import {remove, render, replace} from '../framework/render.js';
 import PointView from '../view/point-view.js';
 import PointFormView from '../view/point-form-view.js';
 
 const Mode = {
-  DEFAULT: 'default',
-  FORM: 'form'
+  DEFAULT: 'DEFAULT',
+  FORM: 'FORM'
 };
 
 export default class PointPresenter {
@@ -48,6 +49,7 @@ export default class PointPresenter {
       offers: this.#offers,
       point: this.#point,
       onFormSubmit: this.#handleFormSubmit,
+      onDeleteClick: this.#handleDeleteClick,
       onFormRollupClick: this.#handleFormRollupClick
     });
 
@@ -102,7 +104,11 @@ export default class PointPresenter {
   };
 
   #handleFavoriteClick = () => {
-    this.#handleDataUpdate({...this.#point, isFavorite: !this.#point.isFavorite});
+    this.#handleDataUpdate(
+      UserAction.UPDATE_POINT,
+      UpdateType.PATCH,
+      {...this.#point, isFavorite: !this.#point.isFavorite}
+    );
   };
 
   #handleRollupClick = () => {
@@ -110,8 +116,27 @@ export default class PointPresenter {
   };
 
   #handleFormSubmit = (point) => {
-    this.#handleDataUpdate(point, true);
+    const isMinorUpdate = this.#point.basePrice !== point.basePrice
+      || this.#point.dateFrom !== point.dateFrom
+      || this.#point.dateTo !== point.dateTo
+      || this.#point.destination !== point.destination
+      || JSON.stringify(this.#point.offers) !== JSON.stringify(point.offers);
+
+    this.#handleDataUpdate(
+      UserAction.UPDATE_POINT,
+      isMinorUpdate ? UpdateType.MINOR : UpdateType.PATCH,
+      point
+    );
+
     this.#replaceFormToPoint();
+  };
+
+  #handleDeleteClick = (point) => {
+    this.#handleDataUpdate(
+      UserAction.DELETE_POINT,
+      UpdateType.MEDIUM,
+      point
+    );
   };
 
   #handleFormRollupClick = () => {
