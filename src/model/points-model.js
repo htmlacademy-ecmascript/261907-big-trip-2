@@ -1,51 +1,74 @@
-import {createPoint} from '../mock/data.js';
 import {sortDay} from '../utils/trip.js';
-import Observable from '../framework/observable.js';
+import AbstractModel from './abstract-model.js';
 
-const POINTS_COUNT = 4;
-
-export default class PointsModel extends Observable {
-  #points = Array.from({length: POINTS_COUNT}, createPoint);
-
+export default class PointsModel extends AbstractModel {
   get points() {
-    return this.#points;
+    return this.items.map(this.#adaptToClient);
   }
 
   addPoint(updateType, update) {
-    this.#points.push(update);
-    this.#points.sort(sortDay);
+    this._items.push(update);
+    this._items.sort(sortDay);
 
     this._notify(updateType, update);
   }
 
-  updatePoint(updateType, update) {
-    const index = this.#points.findIndex((it) => it.id === update.id);
+  async updatePoint(updateType, update) {
+    const index = this._items.findIndex((it) => it.id === update.id);
 
     if (index < 0) {
       throw new Error('Point to update was not found.');
     }
 
-    this.#points = [
-      ...this.#points.slice(0, index),
-      update,
-      ...this.#points.slice(index + 1)
-    ];
+    try {
+      const response = await this._apiService.updatePoint(update);
+      const updatedPoint = this.#adaptToClient(response);
 
-    this._notify(updateType, update);
+      this._items = [
+        ...this._items.slice(0, index),
+        updatedPoint,
+        ...this._items.slice(index + 1)
+      ];
+
+      this._notify(updateType, update);
+    } catch(err) {
+      throw new Error('Could not update point!');
+    }
   }
 
   deletePoint(updateType, update) {
-    const index = this.#points.findIndex((it) => it.id === update.id);
+    const index = this._items.findIndex((it) => it.id === update.id);
 
     if (index < 0) {
       throw new Error('Point to delete was not found.');
     }
 
-    this.#points = [
-      ...this.#points.slice(0, index),
-      ...this.#points.slice(index + 1)
+    this._items = [
+      ...this._items.slice(0, index),
+      ...this._items.slice(index + 1)
     ];
 
     this._notify(updateType, update);
+  }
+
+  #adaptToClient(point) {
+    if (!point['base_price']) {
+      return point;
+    }
+
+    const adaptedPoint = {
+      ...point,
+      basePrice: point['base_price'],
+      dateFrom: point['date_from'],
+      dateTo: point['date_to'],
+      isFavorite: point['is_favorite']
+    };
+
+    delete adaptedPoint['base_price'];
+    delete adaptedPoint['date_from'];
+    delete adaptedPoint['date_to'];
+    delete adaptedPoint['is_favorite'];
+
+    return adaptedPoint;
   }
 }
