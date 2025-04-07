@@ -31,9 +31,9 @@ const getDestinationTemplate = ({description, pictures}) => `
 
 const getDestinationsListTemplate = ({name}) => `<option value="${name}"></option>`;
 
-const getOptionTemplate = ({id, title, price}, pointId, pointOffers) => `
+const getOptionTemplate = ({id, title, price}, pointId, pointOffers, isDisabled) => `
   <div class="event__offer-selector">
-    <input class="event__offer-checkbox  visually-hidden" id="event-offer-${id}-${pointId}" type="checkbox" name="event-offer-${id}" value=${id} ${pointOffers.includes(id) ? 'checked' : ''}>
+    <input class="event__offer-checkbox  visually-hidden" id="event-offer-${id}-${pointId}" type="checkbox" name="event-offer-${id}" value=${id} ${pointOffers.includes(id) ? 'checked' : ''}${isDisabled ? ' disabled' : ''}>
     <label class="event__offer-label" for="event-offer-${id}-${pointId}">
       <span class="event__offer-title">${title}</span>
       &plus;&euro;&nbsp;
@@ -42,27 +42,27 @@ const getOptionTemplate = ({id, title, price}, pointId, pointOffers) => `
   </div>
 `;
 
-const getTypeTemplate = (type, isChecked, id) => `
+const getTypeTemplate = (type, isChecked, id, isDisabled) => `
   <div class="event__type-item">
-    <input id="event-type-${type}-${id}" class="event__type-input  visually-hidden" type="radio" name="event-type" value="${type}" ${isChecked ? 'checked' : ''} />
+    <input id="event-type-${type}-${id}" class="event__type-input  visually-hidden" type="radio" name="event-type" value="${type}" ${isChecked ? 'checked' : ''}${isDisabled ? ' disabled' : ''} />
     <label class="event__type-label  event__type-label--${type}" for="event-type-${type}-${id}">${type[0].toUpperCase()}${type.slice(1)}</label>
   </div>
 `;
 
 const createPointFormTemplate = (destinations, offersByType, point) => {
-  const {id, basePrice, dateFrom, dateTo, destination, offers, type} = point;
+  const {id, basePrice, dateFrom, dateTo, destination, offers, type, isDisabled, isSaving, isDeleting} = point;
   const pointFrom = dayjs(dateFrom);
   const pointTo = dayjs(dateTo);
   const isNew = destination === '';
   const destinationInfo = destinations.find((it) => destination === it.id);
 
-  const isSubmitDisabled = pointFrom >= pointTo
+  const isSubmitDisabled = pointFrom > pointTo
     || !destination
     || !basePrice;
 
-  const typesTemplate = TYPES.map((it) => getTypeTemplate(it, it === type, id)).join('');
+  const typesTemplate = TYPES.map((it) => getTypeTemplate(it, it === type, id, isDisabled)).join('');
   const destinationsListTemplate = destinations.map((it) => getDestinationsListTemplate(it)).join('');
-  const optionsTemplate = offersByType.map((it) => getOptionTemplate(it, id, offers)).join('');
+  const optionsTemplate = offersByType.map((it) => getOptionTemplate(it, id, offers, isDisabled)).join('');
   const destinationTemplate = destinationInfo ? getDestinationTemplate(destinationInfo) : null;
 
   return `
@@ -74,7 +74,7 @@ const createPointFormTemplate = (destinations, offersByType, point) => {
               <span class="visually-hidden">Choose event type</span>
               <img class="event__type-icon" width="17" height="17" src="img/icons/${type}.png" alt="Event type icon">
             </label>
-            <input class="event__type-toggle  visually-hidden" id="event-type-toggle-${id}" type="checkbox">
+            <input class="event__type-toggle  visually-hidden" id="event-type-toggle-${id}" type="checkbox"${isDisabled ? ' disabled' : ''}>
             <div class="event__type-list">
               <fieldset class="event__type-group">
                 <legend class="visually-hidden">Event type</legend>
@@ -86,29 +86,33 @@ const createPointFormTemplate = (destinations, offersByType, point) => {
             <label class="event__label  event__type-output" for="event-destination-${id}">
               ${type}
             </label>
-            <input class="event__input  event__input--destination" id="event-destination-${id}" type="text" name="event-destination" value="${destinationInfo ? destinationInfo.name : ''}" list="destination-list-${id}">
+            <input class="event__input  event__input--destination" id="event-destination-${id}" type="text" name="event-destination" value="${destinationInfo ? destinationInfo.name : ''}" list="destination-list-${id}"${isDisabled ? ' disabled' : ''}>
             <datalist id="destination-list-${id}">
               ${destinationsListTemplate}
             </datalist>
           </div>
           <div class="event__field-group  event__field-group--time">
             <label class="visually-hidden" for="event-start-time-${id}">From</label>
-            <input class="event__input  event__input--time" id="event-start-time-${id}" type="text" name="event-start-time" value="${pointFrom.format('DD/MM/YY HH:mm')}">
+            <input class="event__input  event__input--time" id="event-start-time-${id}" type="text" name="event-start-time" value="${pointFrom.format('DD/MM/YY HH:mm')}"${isDisabled ? ' disabled' : ''}>
             &mdash;
             <label class="visually-hidden" for="event-end-time-${id}">To</label>
-            <input class="event__input  event__input--time" id="event-end-time-${id}" type="text" name="event-end-time" value="${pointTo.format('DD/MM/YY HH:mm')}">
+            <input class="event__input  event__input--time" id="event-end-time-${id}" type="text" name="event-end-time" value="${pointTo.format('DD/MM/YY HH:mm')}"${isDisabled ? ' disabled' : ''}>
           </div>
           <div class="event__field-group  event__field-group--price">
             <label class="event__label" for="event-price-${id}">
               <span class="visually-hidden">Price</span>
               &euro;
             </label>
-            <input class="event__input  event__input--price" id="event-price-${id}" type="text" name="event-price" value="${basePrice}">
+            <input class="event__input  event__input--price" id="event-price-${id}" type="text" name="event-price" value="${basePrice}"${isDisabled ? ' disabled' : ''}>
           </div>
-          <button class="event__save-btn  btn  btn--blue" type="submit"${isSubmitDisabled ? ' disabled' : ''}>Save</button>
-          <button class="event__reset-btn" type="reset">${isNew ? 'Cancel' : 'Delete'}</button>
+          <button class="event__save-btn  btn  btn--blue" type="submit"${isSubmitDisabled || isDisabled ? ' disabled' : ''}>
+            ${isSaving ? 'Saving...' : 'Save'}
+          </button>
+          <button class="event__reset-btn" type="reset"${isDisabled ? ' disabled' : ''}>
+            ${isNew ? 'Cancel' : `${isDeleting ? 'Deleting...' : 'Delete'}`}
+          </button>
           ${!isNew ? `
-            <button class="event__rollup-btn" type="button">
+            <button class="event__rollup-btn" type="button"${isDisabled ? ' disabled' : ''}>
               <span class="visually-hidden">Open event</span>
             </button>
           ` : ''}
@@ -211,7 +215,7 @@ export default class PointFormView extends AbstractStatefulView {
 
   #formSubmitHandler = (evt) => {
     evt.preventDefault();
-    this.#handleFormSubmit(this._state);
+    this.#handleFormSubmit(PointFormView.parseStateToPoint(this._state));
   };
 
   #deleteClickHandler = (evt) => {
@@ -299,10 +303,21 @@ export default class PointFormView extends AbstractStatefulView {
   };
 
   static parsePointToState(point) {
-    return {...point};
+    return {
+      ...point,
+      isDisabled: false,
+      isSaving: false,
+      isDeleting: false
+    };
   }
 
   static parseStateToPoint(state) {
-    return {...state};
+    const point = {...state};
+
+    delete point.isDisabled;
+    delete point.isSaving;
+    delete point.isDeleting;
+
+    return point;
   }
 }

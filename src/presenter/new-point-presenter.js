@@ -48,6 +48,25 @@ export default class NewPointPresenter {
     document.removeEventListener('keydown', this.#escKeydownHandler);
   }
 
+  setSaving() {
+    this.#pointFormComponent.updateElement({
+      isDisabled: true,
+      isSaving: true
+    });
+  }
+
+  setAborting() {
+    const resetFormState = () => {
+      this.#pointFormComponent.updateElement({
+        isDisabled: false,
+        isSaving: false,
+        isDeleting: false
+      });
+    };
+
+    this.#pointFormComponent.shake(resetFormState);
+  }
+
   #escKeydownHandler = (evt) => {
     if (evt.key === 'Escape') {
       evt.preventDefault();
@@ -61,8 +80,6 @@ export default class NewPointPresenter {
       UpdateType.MEDIUM,
       point
     );
-
-    this.destroy();
   };
 
   #handleDeleteClick = () => {
