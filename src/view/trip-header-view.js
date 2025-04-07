@@ -4,8 +4,15 @@ import AbstractView from '../framework/view/abstract-view';
 const getDates = ([dateFrom, dateTo]) => {
   const pointFrom = dayjs(dateFrom);
   const pointTo = dayjs(dateTo);
+  let dateString = '';
 
-  return `${pointFrom.format('D')}${pointFrom.format('M') !== pointTo.format('M') ? ` ${pointFrom.format('MMM')}` : ''} — ${pointTo.format('D MMM')}`;
+  dateString += `${pointFrom.format('D MMM')}`;
+
+  if (pointFrom.format('D M') !== pointTo.format('D M')) {
+    dateString += ` — ${pointTo.format('D MMM')}`;
+  }
+
+  return dateString;
 };
 
 const createTripHeaderTemplate = (route, dates, sum) => `

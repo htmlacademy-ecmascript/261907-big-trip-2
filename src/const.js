@@ -16,7 +16,8 @@ const UpdateType = {
   MINOR: 'MINOR',
   MEDIUM: 'MEDIUM',
   MAJOR: 'MAJOR',
-  INIT: 'INIT'
+  INIT: 'INIT',
+  ERROR: 'ERROR'
 };
 
 const UserAction = {

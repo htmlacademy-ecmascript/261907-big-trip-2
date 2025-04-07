@@ -6,6 +6,9 @@ dayjs.extend(duration);
 
 const createPointTimeTemplate = (pointFrom, pointTo) => {
   const pointDuration = dayjs.duration(pointTo - pointFrom).$d;
+  const days = `${pointTo.diff(pointFrom, 'days') ? `${`${pointTo.diff(pointFrom, 'days')}`.padStart(2, '0')}D ` : ''}`;
+  const hours = `${pointTo.diff(pointFrom, 'days') || pointDuration.hours ? `${`${pointDuration.hours}`.padStart(2, '0')}H ` : ''}`;
+  const minutes = `${`${pointDuration.minutes}`.padStart(2, '0')}M`;
 
   return `
     <p class="event__time">
@@ -13,11 +16,7 @@ const createPointTimeTemplate = (pointFrom, pointTo) => {
       &mdash;
       <time class="event__end-time" datetime="${pointTo.format('YYYY-MM-DD[T]HH:mm')}">${pointTo.format('HH:mm')}</time>
     </p>
-    <p class="event__duration">
-      ${pointTo.diff(pointFrom, 'days') ? `${`${pointTo.diff(pointFrom, 'days')}`.padStart(2, '0')}D ` : ''}
-      ${pointTo.diff(pointFrom, 'days') || pointDuration.hours ? `${`${pointDuration.hours}`.padStart(2, '0')}H ` : ''}
-      ${`${pointDuration.minutes}`.padStart(2, '0')}M
-    </p>
+    <p class="event__duration">${days}${hours}${minutes}</p>
   `;
 };
 
