@@ -12,10 +12,6 @@ export default class AbstractModel extends Observable {
     this._apiService = apiService;
   }
 
-  get items() {
-    return this._items;
-  }
-
   async init() {
     try {
       const items = await this._apiService.items;

@@ -10,7 +10,7 @@ const BLANK_EVENT = {
   dateFrom: new Date().toISOString(),
   dateTo: new Date().toISOString(),
   destination: '',
-  isFavorite: 0,
+  isFavorite: false,
   offers: [],
   type: getRandomArrayElement(TYPES)
 };
