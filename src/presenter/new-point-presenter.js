@@ -1,6 +1,5 @@
 import {RenderPosition, remove, render} from '../framework/render.js';
 import {UpdateType, UserAction} from '../const';
-import {generatePointId} from '../mock/data';
 import PointFormView from '../view/point-form-view.js';
 
 export default class NewPointPresenter {
@@ -60,7 +59,7 @@ export default class NewPointPresenter {
     this.#handleDataUpdate(
       UserAction.ADD_POINT,
       UpdateType.MEDIUM,
-      {id: generatePointId(), ...point}
+      point
     );
 
     this.destroy();

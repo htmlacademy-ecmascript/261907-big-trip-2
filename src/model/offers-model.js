@@ -1,10 +1,7 @@
-import {offers} from '../mock/data.js';
-import Observable from '../framework/observable.js';
+import AbstractModel from './abstract-model';
 
-export default class OffersModel extends Observable {
-  #offers = offers;
-
+export default class OffersModel extends AbstractModel {
   get offers() {
-    return this.#offers;
+    return this._items;
   }
 }

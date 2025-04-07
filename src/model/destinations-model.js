@@ -1,10 +1,7 @@
-import {DESTINATIONS} from '../mock/data.js';
-import Observable from '../framework/observable.js';
+import AbstractModel from './abstract-model';
 
-export default class DestinationsModel extends Observable {
-  #destinations = DESTINATIONS;
-
+export default class DestinationsModel extends AbstractModel {
   get destinations() {
-    return this.#destinations;
+    return this._items;
   }
 }
