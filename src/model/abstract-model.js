@@ -3,7 +3,7 @@ import Observable from '../framework/observable.js';
 
 export default class AbstractModel extends Observable {
   #type = null;
-  _items = [];
+  #items = [];
   _apiService = null;
 
   constructor({apiService, type}) {
@@ -12,15 +12,23 @@ export default class AbstractModel extends Observable {
     this._apiService = apiService;
   }
 
+  get items() {
+    return this.#items;
+  }
+
+  set items(items) {
+    this.#items = items;
+  }
+
   async init() {
     try {
       const items = await this._apiService.items;
 
-      this._items = items;
+      this.items = items;
+      this._notify(UpdateType.INIT, this.#type);
     } catch(err) {
-      this._items = [];
+      this.items = [];
+      this._notify(UpdateType.ERROR);
     }
-
-    this._notify(UpdateType.INIT, this.#type);
   }
 }

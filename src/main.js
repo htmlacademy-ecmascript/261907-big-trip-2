@@ -11,7 +11,7 @@ import ListPresenter from './presenter/list-presenter.js';
 import NewPointButtonView from './view/new-point-button-view.js';
 
 const AUTHORIZATION = 'Basic RHluYW1pZ2h0';
-const END_POINT = 'https://22.objects.htmlacademy.pro/big-trip';
+const END_POINT = 'https://23.objects.htmlacademy.pro/big-trip';
 
 const DataType = {
   DESTINATIONS: 'DESTINATIONS',

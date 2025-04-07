@@ -152,15 +152,26 @@ export default class PointPresenter {
   };
 
   #handleFormSubmit = (point) => {
-    const isMinorUpdate = this.#point.basePrice !== point.basePrice
-      || this.#point.dateFrom !== point.dateFrom
+    let updateType = null;
+
+    if (
+      this.#point.dateFrom !== point.dateFrom
       || this.#point.dateTo !== point.dateTo
-      || this.#point.destination !== point.destination
-      || JSON.stringify(this.#point.offers) !== JSON.stringify(point.offers);
+      || this.#point.basePrice !== point.basePrice
+    ) {
+      updateType = UpdateType.MEDIUM;
+    } else if (
+      this.#point.destination !== point.destination
+      || JSON.stringify(this.#point.offers) !== JSON.stringify(point.offers)
+    ) {
+      updateType = UpdateType.MINOR;
+    } else {
+      updateType = UpdateType.PATCH;
+    }
 
     this.#handleDataUpdate(
       UserAction.UPDATE_POINT,
-      isMinorUpdate ? UpdateType.MINOR : UpdateType.PATCH,
+      updateType,
       point
     );
   };
