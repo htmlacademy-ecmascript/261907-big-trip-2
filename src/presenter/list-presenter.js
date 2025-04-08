@@ -3,10 +3,11 @@ import UiBlocker from '../framework/ui-blocker/ui-blocker.js';
 import {Filters, SortType, UpdateType, UserAction} from '../const.js';
 import {filter} from '../utils/filter.js';
 import {sortDay, sortPrice, sortTime} from '../utils/trip.js';
+import NewPointButtonView from '../view/new-point-button-view.js';
 import LoadingView from '../view/loading-view.js';
 import ErrorView from '../view/error-view.js';
 import SortView from '../view/sort-view.js';
-import NoPointView from '../view/no-points-view.js';
+import NoPointsView from '../view/no-points-view.js';
 import TripPointsListView from '../view/trip-points-list-view.js';
 import TripHeaderPresenter from './trip-header-presenter.js';
 import NewPointPresenter from './new-point-presenter.js';
@@ -29,6 +30,7 @@ export default class ListPresenter {
   #filterType = Filters.EVERYTHING;
   #loadedDataTypes = new Set();
   #isLoading = true;
+  #newPointButtonComponent = null;
   #loadingComponent = new LoadingView();
   #errorComponent = new ErrorView();
   #noPointsComponent = null;
@@ -36,21 +38,19 @@ export default class ListPresenter {
   #pointsListComponent = new TripPointsListView();
   #header = null;
   #main = null;
-  #handleNewPointDestroy = null;
 
   #uiBlocker = new UiBlocker({
     lowerLimit: TimeLimit.LOWER_LIMIT,
     upperLimit: TimeLimit.UPPER_LIMIT
   });
 
-  constructor({header, main, filtersModel, destinationsModel, offersModel, pointsModel, onNewPointDestroy}) {
+  constructor({header, main, filtersModel, destinationsModel, offersModel, pointsModel}) {
     this.#header = header;
     this.#main = main;
     this.#filtersModel = filtersModel;
     this.#destinationsModel = destinationsModel;
     this.#offersModel = offersModel;
     this.#pointsModel = pointsModel;
-    this.#handleNewPointDestroy = onNewPointDestroy;
 
     this.#destinationsModel.addObserver(this.#handleModelEvent);
     this.#offersModel.addObserver(this.#handleModelEvent);
@@ -90,7 +90,7 @@ export default class ListPresenter {
     this.#renderPoints();
   }
 
-  createPoint() {
+  #createPoint() {
     this.#currentSortType = SortType.DAY;
     this.#filtersModel.setFilter(UpdateType.MAJOR, Filters.EVERYTHING);
 
@@ -102,12 +102,20 @@ export default class ListPresenter {
     this.#newPointPresenter.init();
   }
 
+  #renderNewPointButton() {
+    this.#newPointButtonComponent = new NewPointButtonView({
+      onClick: this.#handleNewPointButtonClick
+    });
+
+    render(this.#newPointButtonComponent, this.#header);
+  }
+
   #renderLoading() {
     render(this.#loadingComponent, this.#main);
   }
 
   #renderNoPoints() {
-    this.#noPointsComponent = new NoPointView({
+    this.#noPointsComponent = new NoPointsView({
       filterType: this.#filterType
     });
 
@@ -205,20 +213,17 @@ export default class ListPresenter {
     }
   }
 
-  #newPointDestroyHandler = () => {
-    this.#handleNewPointDestroy();
+  #handleNewPointDestroy = () => {
+    this.#newPointButtonComponent.element.disabled = false;
 
     if (!this.points.length) {
       this.#renderNoPoints();
     }
   };
 
-  #handleModeChange = () => {
-    this.#newPointPresenter.destroy();
-
-    this.#pointsPresenters.forEach((it) => {
-      it.resetView();
-    });
+  #handleNewPointButtonClick = () => {
+    this.#createPoint();
+    this.#newPointButtonComponent.element.disabled = true;
   };
 
   #handleSortTypeChange = (sortType) => {
@@ -229,6 +234,14 @@ export default class ListPresenter {
     this.#currentSortType = sortType;
     this.#clearPoints();
     this.#renderPoints();
+  };
+
+  #handleModeChange = () => {
+    this.#newPointPresenter.destroy();
+
+    this.#pointsPresenters.forEach((it) => {
+      it.resetView();
+    });
   };
 
   #handleViewAction = async (actionType, updateType, update) => {
@@ -299,13 +312,14 @@ export default class ListPresenter {
         if (this.#loadedDataTypes.size === 3) {
           this.#isLoading = false;
           remove(this.#loadingComponent);
+          this.#renderNewPointButton();
 
           this.#newPointPresenter = new NewPointPresenter({
             destinations: this.destinations,
             offers: this.offers,
             pointsContainer: this.#pointsListComponent.element,
             onDataUpdate: this.#handleViewAction,
-            onDestroy: this.#newPointDestroyHandler
+            onDestroy: this.#handleNewPointDestroy
           });
 
           this.#renderPoints();

@@ -1,4 +1,3 @@
-import {render} from './framework/render.js';
 import FiltersModel from './model/filters-model.js';
 import DestinationsModel from './model/destinations-model.js';
 import DestinationsApiService from './api-service/destinations-api-service.js';
@@ -8,7 +7,6 @@ import PointsModel from './model/points-model.js';
 import PointsApiService from './api-service/points-api-service.js';
 import FiltersPresenter from './presenter/filters-presenter.js';
 import ListPresenter from './presenter/list-presenter.js';
-import NewPointButtonView from './view/new-point-button-view.js';
 
 const AUTHORIZATION = 'Basic RHluYW1pZ2h0';
 const END_POINT = 'https://22.objects.htmlacademy.pro/big-trip';
@@ -51,22 +49,8 @@ const listPresenter = new ListPresenter({
   filtersModel,
   destinationsModel,
   offersModel,
-  pointsModel,
-  onNewPointDestroy: handleNewPointFormClose
+  pointsModel
 });
-
-const newPointButtonComponent = new NewPointButtonView({
-  onClick: handleNewPointButtonClick
-});
-
-function handleNewPointFormClose() {
-  newPointButtonComponent.element.disabled = false;
-}
-
-function handleNewPointButtonClick() {
-  listPresenter.createPoint();
-  newPointButtonComponent.element.disabled = true;
-}
 
 listPresenter.init();
 filtersPresenter.init();
@@ -75,9 +59,6 @@ destinationsModel.init()
   .then(() => {
     offersModel.init()
       .then(() => {
-        pointsModel.init()
-          .finally(() => {
-            render(newPointButtonComponent, tripHeaderElement);
-          });
+        pointsModel.init();
       });
   });
