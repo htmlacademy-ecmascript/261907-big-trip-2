@@ -1,10 +1,18 @@
 import dayjs from 'dayjs';
 
-const extractRoute = (destinations, points) => points
-  .map((point) => point.destination)
-  .filter((destination, i, pointDestinations) => i === 0 || destination !== pointDestinations[i - 1])
-  .map((id) => destinations.find((it) => it.id === id).name)
-  .join(' — ');
+const extractDestinationName = (destinations, id) => destinations.find((it) => it.id === id).name;
+
+const extractRoute = (destinations, points) => {
+  const pointsWithTransfer = points
+    .map((point) => point.destination)
+    .filter((destination, i, pointDestinations) => i === 0 || destination !== pointDestinations[i - 1]);
+
+  const route = pointsWithTransfer.length > 3
+    ? `${extractDestinationName(destinations, pointsWithTransfer[0])} — ... — ${extractDestinationName(destinations, pointsWithTransfer[pointsWithTransfer.length - 1])}`
+    : pointsWithTransfer.map((id) => extractDestinationName(destinations, id)).join(' — ');
+
+  return route;
+};
 
 const getBasePrices = (points) => points.map((point) => point.basePrice);
 
