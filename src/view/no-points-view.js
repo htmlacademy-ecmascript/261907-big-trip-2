@@ -10,7 +10,7 @@ const NoPointsNotification = {
 
 const createNoPointsTemplate = (filterType) => `<p class="trip-events__msg">${NoPointsNotification[filterType]}</p>`;
 
-export default class NoPointView extends AbstractView {
+export default class NoPointsView extends AbstractView {
   #filterType = null;
 
   constructor({filterType}) {
